@@ -38,7 +38,7 @@ fn uncache(file: &Mmap, len: usize) {
 #[cfg(target_os = "linux")]
 fn uncache(file: &File, mmap: &mut Mmap, len: usize) {
     // Flush a part of the file from disk cache Linux version/*{{{*/
-    let ret = unsafe { posix_fadvise(file.as_raw_fd() as _, 0, len as i64, POSIX_FADV_DONTNEED) };
+    let ret = unsafe { posix_fadvise(file.as_raw_fd() as _, 0, len as i32, POSIX_FADV_DONTNEED) };
     assert!(ret == 0, "posix_fadvise failed with error {}", ret);
 
     // The need for this re-mmap below is confusing, here's what I know so far: A
