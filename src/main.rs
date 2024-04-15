@@ -68,8 +68,8 @@ fn gen_stats(answer: &[u8], pages: usize) -> f64 {
     let in_cache: usize = answer.iter().map(|x| (x & 0x1) as usize).sum();
     assert!(in_cache <= f64::MAX as usize); // ensure safe usize -> f64 conversion
     assert!(pages <= f64::MAX as usize); // ensure safe usize -> f64 conversion
-    //let percent_cached = (in_cache as f64 / pages as f64) * 100_f64;
-    //println!("[+] Pages in cache {in_cache}/{pages} ({percent_cached:.2}%)");
+                                         //let percent_cached = (in_cache as f64 / pages as f64) * 100_f64;
+                                         //println!("[+] Pages in cache {in_cache}/{pages} ({percent_cached:.2}%)");
     (in_cache as f64 / pages as f64) * 100_f64
 }
 /*}}}*/
@@ -80,19 +80,18 @@ fn cache_file(file: &mut File, length: usize, block_size: usize, offset: u64) ->
     file.seek(SeekFrom::Start(offset)).unwrap();
     //let start = Instant::now();
     for _ in 0..=(length / block_size) {
-        #![allow(clippy::unused_io_amount)]
         // the read is not handled because we're only doing it to encourage the
         // kernel to cache the file. Ignore clippy's error.
         file.read(&mut junk).unwrap();
     }
     0.0 // return this if we aren't timing, otherwise uncomment below
-    /*
-      let elapsed = (start.elapsed().as_secs() as f64)
-                    + (f64::from(start.elapsed().subsec_nanos()) / 1_000_000_000.0);
-      println!("[+] Read {length} bytes in {elapsed:.2} s ({:.2} GB/s)",
-        (length as f64 / elapsed) / 1024.0 / 1024.0 / 1024.0);
-      elapsed
-    */
+        /*
+          let elapsed = (start.elapsed().as_secs() as f64)
+                        + (f64::from(start.elapsed().subsec_nanos()) / 1_000_000_000.0);
+          println!("[+] Read {length} bytes in {elapsed:.2} s ({:.2} GB/s)",
+            (length as f64 / elapsed) / 1024.0 / 1024.0 / 1024.0);
+          elapsed
+        */
 }
 /*}}}*/
 
@@ -309,7 +308,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                             // doing this single Md4 digest is faster than
                             // multiple updates() + finalize()
                             let mut md = md4::MD4::new();
-                            md.digest(&utf16[..clear.len()*2]);
+                            md.digest(&utf16[..clear.len() * 2]);
                             //md.digest(&utf16);
                             let hash = md.get_hash();
 
@@ -333,7 +332,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                                 out.extend_from_slice(&[58]); // colon
                                 out.extend_from_slice(clear); // clear text
                                 out.extend_from_slice(&[10]); // newline
-                                // check if our output buffer should be flushed
+                                                              // check if our output buffer should be flushed
                                 if out.len() >= 8192 {
                                     // make sure this comparison aligns with capacity
                                     stdout().write_all(&out).unwrap();
@@ -377,7 +376,6 @@ fn read_wordlist(
     block_size: usize,
 ) -> Result<Stats, Box<dyn Error>> {
     // Read the wordlist, send chunks to the worker threads & handle cache'ing /*{{{*/
-
     let mut stats = Stats {
         cracked: 0, // how many have we cracked
         hashed: 0,  // how many hashes have we generated
@@ -439,17 +437,17 @@ fn read_wordlist(
                 _ if (wordlist.cache_point + wordlist.cache_size / 2) >= wordlist.length => {
                     wordlist.length
                 }
-                _ => (wordlist.cache_point + wordlist.cache_size / 2),
+                _ => wordlist.cache_point + wordlist.cache_size / 2,
             };
             /*
-            // Some debugging stats
-            let mut percent_cached: f64 = 0.0;
-            let mut answer = vec![0u8; wordlist.pages];
-            mincore_check(&wordlist.mmap, wordlist.length, &mut answer);
-            percent_cached = gen_stats(&answer, wordlist.pages);
-            println!("[+] Purging up first {:.2}% bytes from cache
-          Cache point now at {:.2}%, Total in cache now {percent_cached:.2}%",(pos as f64/wordlist.length as f64) * 100_f64,(wordlist.cache_point as f64/wordlist.length as f64) *100_f64);
-            */
+              // Some debugging stats
+              let mut percent_cached: f64 = 0.0;
+              let mut answer = vec![0u8; wordlist.pages];
+              mincore_check(&wordlist.mmap, wordlist.length, &mut answer);
+              percent_cached = gen_stats(&answer, wordlist.pages);
+              println!("[+] Purging up first {:.2}% bytes from cache
+            Cache point now at {:.2}%, Total in cache now {percent_cached:.2}%",(pos as f64/wordlist.length as f64) * 100_f64,(wordlist.cache_point as f64/wordlist.length as f64) *100_f64);
+              */
         }
     }
     Ok(stats)
@@ -458,7 +456,6 @@ fn read_wordlist(
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Put it all together /*{{{*/
-
     // Put the input hashes (to be cracked) into the required forms
     let path = env::args()
         .nth(1)
@@ -483,9 +480,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let cache_size = 5_368_709_120; //5G
     //let cache_size = 4_294_967_296; //4G
     let cache_size = 2_147_483_648; //2G
-    //let cache_size = 1_073_741_824; //1G
-    //let cache_size = 536_870_912; //512M
-    //let cache_size = 268_435_456; //256M
+                                    //let cache_size = 1_073_741_824; //1G
+                                    //let cache_size = 536_870_912; //512M
+                                    //let cache_size = 268_435_456; //256M
 
     // size of wordlist chunk to send to thread
     // if you're seeing too many waits, try optimising this by taking it via cmd
