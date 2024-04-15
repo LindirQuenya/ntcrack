@@ -104,7 +104,7 @@ impl MD4 {
 
         //let total = ((self.block_len / 55) + 1) * 64;
         let total = match (self.block_len + 9) % 64 {
-            0 => ((self.block_len + 9) / 64) * 64, 
+            0 => ((self.block_len + 9) / 64) * 64,
             _ => (((self.block_len + 9) / 64) + 1) * 64,
         };
         let padding = match (total - self.block_len) % 64 {
@@ -120,7 +120,7 @@ impl MD4 {
             128 => &mut buffer_128,
             _ => panic!("too big {padding}"),
         };
-        self.pad(&input[pos..],buffer, padding);
+        self.pad(&input[pos..], buffer, padding);
 
         for block in buffer.chunks_exact(64) {
             self.compress(block);
@@ -133,5 +133,35 @@ impl MD4 {
         output[..input.len()].copy_from_slice(input);
         output[input.len()] = 0x80;
         output[(size - 8) as usize..].copy_from_slice(&bit_len);
-    } 
+    }
+}
+#[cfg(test)]
+pub mod tests {
+    use super::MD4;
+
+    #[test]
+    fn test_compress_1round() {
+        let mut md4 = MD4::new();
+        let input: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        md4.compress(&input);
+        println!("{:?}", md4.state);
+        assert_eq!(md4.state, [299529934, 433262977, 1545928549, 809762716]);
+    }
+    #[test]
+    fn test_compress_2round() {
+        let mut md4 = MD4::new();
+        let input: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        md4.compress(&input);
+        md4.compress(&input);
+        println!("{:?}", md4.state);
+        assert_eq!(md4.state, [219457800, 3173588611, 852871850, 2798846488]);
+    }
+    #[test]
+    fn test_compress_zeros() {
+        let mut md4 = MD4::new();
+        let input: [u8; 16] = [0; 16];
+        md4.compress(&input);
+        println!("{:?}", md4.state);
+        assert_eq!(md4.state, [22107631, 778004395, 914475405, 1950853909]);
+    }
 }
