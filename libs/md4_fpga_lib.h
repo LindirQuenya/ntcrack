@@ -15,4 +15,5 @@ typedef struct {
 LIBMD4FPGA_EXPORTED void open_mmap(mmapprops_t *empty);
 LIBMD4FPGA_EXPORTED void close_mmap(mmapprops_t *props);
 LIBMD4FPGA_EXPORTED void compress_fpga(volatile void *ptr, unsigned int *state, const unsigned char *x);
+
 #endif

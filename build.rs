@@ -26,7 +26,5 @@ fn main() {
     println!("cargo::rerun-if-changed=src/md4_fpga_lib.c");
     cc::Build::new()
         .file("libs/md4_fpga_lib.c")
-        .flag("-DBUILDING_LIBMD4FPGA")
-        .flag("-fvisibility=hidden")
         .compile("md4fpga");
 }

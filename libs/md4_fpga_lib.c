@@ -64,27 +64,27 @@ void close_mmap(mmapprops_t *props) {
 }
 
 // buf has length >= RETURN_COUNT.
-inline void read_out(volatile void *ptr, uint32_t *buf) {
+void read_out(volatile void *ptr, uint32_t *buf) {
 	memcpy(buf, (uint32_t *)(ptr + RETURN_OFFSET), RETURN_COUNT*sizeof(uint32_t));
 }
 
-inline void write_state(volatile void *ptr, const uint32_t *buf) {
+void write_state(volatile void *ptr, const uint32_t *buf) {
 	memcpy((uint32_t *)(ptr + STATE_OFFSET), buf, STATE_COUNT*sizeof(uint32_t));
 }
 
-inline void write_X(volatile void *ptr, const uint32_t *buf) {
+void write_X(volatile void *ptr, const uint32_t *buf) {
 	memcpy((uint32_t *)(ptr + X_OFFSET), buf, X_COUNT*sizeof(uint32_t));
 }
 
-inline void write_X_byte(volatile void *ptr, const uint8_t *buf) {
+void write_X_byte(volatile void *ptr, const uint8_t *buf) {
 	memcpy((uint8_t *)(ptr + X_OFFSET), buf, X_COUNT*sizeof(uint32_t));
 }
 
-inline void start_digest(volatile void *ptr) {
+void start_digest(volatile void *ptr) {
 	*((char *)(ptr + CTRL_OFFSET)) |= 1;
 }
 
-inline int wait_digest(volatile void *ptr) {
+int wait_digest(volatile void *ptr) {
 	int i = 0;
 	while (!(*((char *)(ptr + CTRL_OFFSET)) & 2)){i++;}
 	return i;
