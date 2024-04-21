@@ -19,6 +19,12 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Instant;
 
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
 // BSD/macOS and Linux use different uncache calls msync vs fadvise
 #[cfg(target_os = "macos")]
 use libc::{mincore, msync, MS_INVALIDATE};
@@ -242,7 +248,8 @@ struct Stats {
 
 fn setup_workers(hashes: &Hashes) -> Workers {
     // Fire off our worker threads to wait for the data from the wordlist /*{{{*/
-    let threadnum = num_cpus::get(); // set the number of threads to the number of cores
+//    let threadnum = num_cpus::get(); // set the number of threads to the number of cores
+    let threadnum = 1; // Hardware only allows us to use one thread.
     let mut threadhand: Vec<JoinHandle<_>> = Vec::new();
     // We clone the reciever multiple times which is how the threads pick up new clears
     // Can't do that with mpsc which only allows cloning the sender, need crossbeam
@@ -274,6 +281,8 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                 waits: 0,
                 kbs: 0, // not used here
             };
+            let mut mmap_props: mmapprops_t;
+            open_mmap(&mut mmap_props);
 
             // Fetch clears from the channel
             loop {
@@ -285,6 +294,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                         //println!("Break {}",j);
                         stdout().write_all(&out).unwrap();
                         tx2_thread.send(stats).unwrap();
+                        close_mmap(&mut mmap_props);
                         break;
                     }
                     // We got some clears to crack
@@ -308,7 +318,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                             }
                             // doing this single Md4 digest is faster than
                             // multiple updates() + finalize()
-                            let mut md = md4::MD4::new();
+                            let mut md = md4::MD4::new(&mmap_props);
                             md.digest(&utf16[..clear.len()*2]);
                             //md.digest(&utf16);
                             let hash = md.get_hash();
@@ -482,10 +492,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let cache_size = 10_737_418_240; //10G
     //let cache_size = 5_368_709_120; //5G
     //let cache_size = 4_294_967_296; //4G
-    let cache_size = 2_147_483_648; //2G
+    //let cache_size = 2_147_483_648; //2G
     //let cache_size = 1_073_741_824; //1G
     //let cache_size = 536_870_912; //512M
-    //let cache_size = 268_435_456; //256M
+    let cache_size = 268_435_456; //256M
 
     // size of wordlist chunk to send to thread
     // if you're seeing too many waits, try optimising this by taking it via cmd

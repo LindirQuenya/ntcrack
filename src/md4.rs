@@ -1,14 +1,22 @@
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
 pub struct MD4 {
     block_len: u64,
     state: [u32; 4],
+    ptr: *mut ::std::os::raw::c_void,
 }
 
 impl MD4 {
-    pub fn new() -> Self {
+    pub fn new(props: &mmapprops_t) -> Self {
         let state = [0x6745_2301, 0xEFCD_AB89, 0x98BA_DCFE, 0x1032_5476];
         Self {
             state,
             block_len: 0,
+            ptr: props.ptr,
         }
     }
 
@@ -123,7 +131,8 @@ impl MD4 {
         self.pad(&input[pos..],buffer, padding);
 
         for block in buffer.chunks_exact(64) {
-            self.compress(block);
+//            self.compress(block);
+            compress_fpga(self.ptr, self.state, block);
         }
     }
 

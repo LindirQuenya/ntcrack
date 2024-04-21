@@ -16,6 +16,10 @@ num_cpus = "1.13.1"
 libc = "0.2.120"
 page_size = "0.4.2"
 
+[build-dependencies]
+bindgen = "0.69.4"
+cc = "1.0.95"
+
 [profile.release]
 #strip = "symbols"
 #debug = true
