@@ -68,15 +68,15 @@ inline void read_out(volatile void *ptr, uint32_t *buf) {
 	memcpy(buf, (uint32_t *)(ptr + RETURN_OFFSET), RETURN_COUNT*sizeof(uint32_t));
 }
 
-inline void write_state(volatile void *ptr, uint32_t *buf) {
+inline void write_state(volatile void *ptr, const uint32_t *buf) {
 	memcpy((uint32_t *)(ptr + STATE_OFFSET), buf, STATE_COUNT*sizeof(uint32_t));
 }
 
-inline void write_X(volatile void *ptr, uint32_t *buf) {
+inline void write_X(volatile void *ptr, const uint32_t *buf) {
 	memcpy((uint32_t *)(ptr + X_OFFSET), buf, X_COUNT*sizeof(uint32_t));
 }
 
-inline void write_X_byte(volatile void *ptr, uint8_t *buf) {
+inline void write_X_byte(volatile void *ptr, const uint8_t *buf) {
 	memcpy((uint8_t *)(ptr + X_OFFSET), buf, X_COUNT*sizeof(uint32_t));
 }
 
@@ -90,7 +90,7 @@ inline int wait_digest(volatile void *ptr) {
 	return i;
 }
 
-void compress_fpga(volatile void *ptr, uint32_t *state, uint8_t *x) {
+void compress_fpga(volatile void *ptr, uint32_t *state, const uint8_t *x) {
 	write_state(ptr, state);
 	write_X_byte(ptr, x);
 	start_digest(ptr);

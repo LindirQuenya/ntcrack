@@ -1,8 +1,5 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+use crate::mmapprops_t;
+use crate::compress_fpga;
 
 pub struct MD4 {
     block_len: u64,
@@ -132,7 +129,9 @@ impl MD4 {
 
         for block in buffer.chunks_exact(64) {
 //            self.compress(block);
-            compress_fpga(self.ptr, self.state, block);
+	unsafe {
+            compress_fpga(self.ptr, self.state.as_mut_ptr(), block.as_ptr());
+        }
         }
     }
 

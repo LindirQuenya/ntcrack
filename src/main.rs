@@ -1,3 +1,9 @@
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
 extern crate hash_hasher;
 extern crate hex;
 extern crate num_cpus;
@@ -19,11 +25,6 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Instant;
 
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 // BSD/macOS and Linux use different uncache calls msync vs fadvise
 #[cfg(target_os = "macos")]
@@ -281,8 +282,11 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                 waits: 0,
                 kbs: 0, // not used here
             };
-            let mut mmap_props: mmapprops_t;
-            open_mmap(&mut mmap_props);
+            let mut mmap_props: mmapprops_t = mmapprops_t {
+                fd: 0,
+                ptr: std::ptr::null_mut()
+            };
+            unsafe { open_mmap(&mut mmap_props); }
 
             // Fetch clears from the channel
             loop {
@@ -294,7 +298,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                         //println!("Break {}",j);
                         stdout().write_all(&out).unwrap();
                         tx2_thread.send(stats).unwrap();
-                        close_mmap(&mut mmap_props);
+                        unsafe {close_mmap(&mut mmap_props); }
                         break;
                     }
                     // We got some clears to crack
