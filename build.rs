@@ -26,5 +26,7 @@ fn main() {
     println!("cargo::rerun-if-changed=src/md4_fpga_lib.c");
     cc::Build::new()
         .file("libs/md4_fpga_lib.c")
+        .opt_level_str("g")
+        .flag("-g")
         .compile("md4fpga");
 }

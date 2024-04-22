@@ -22,4 +22,4 @@ cc = "1.0.95"
 
 [profile.release]
 #strip = "symbols"
-#debug = true
+debug = true
