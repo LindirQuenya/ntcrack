@@ -25,7 +25,6 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Instant;
 
-
 // BSD/macOS and Linux use different uncache calls msync vs fadvise
 #[cfg(target_os = "macos")]
 use libc::{mincore, msync, MS_INVALIDATE};
@@ -75,8 +74,8 @@ fn gen_stats(answer: &[u8], pages: usize) -> f64 {
     let in_cache: usize = answer.iter().map(|x| (x & 0x1) as usize).sum();
     assert!(in_cache <= f64::MAX as usize); // ensure safe usize -> f64 conversion
     assert!(pages <= f64::MAX as usize); // ensure safe usize -> f64 conversion
-    //let percent_cached = (in_cache as f64 / pages as f64) * 100_f64;
-    //println!("[+] Pages in cache {in_cache}/{pages} ({percent_cached:.2}%)");
+                                         //let percent_cached = (in_cache as f64 / pages as f64) * 100_f64;
+                                         //println!("[+] Pages in cache {in_cache}/{pages} ({percent_cached:.2}%)");
     (in_cache as f64 / pages as f64) * 100_f64
 }
 /*}}}*/
@@ -87,19 +86,18 @@ fn cache_file(file: &mut File, length: usize, block_size: usize, offset: u64) ->
     file.seek(SeekFrom::Start(offset)).unwrap();
     //let start = Instant::now();
     for _ in 0..=(length / block_size) {
-        #![allow(clippy::unused_io_amount)]
         // the read is not handled because we're only doing it to encourage the
         // kernel to cache the file. Ignore clippy's error.
         file.read(&mut junk).unwrap();
     }
     0.0 // return this if we aren't timing, otherwise uncomment below
-    /*
-      let elapsed = (start.elapsed().as_secs() as f64)
-                    + (f64::from(start.elapsed().subsec_nanos()) / 1_000_000_000.0);
-      println!("[+] Read {length} bytes in {elapsed:.2} s ({:.2} GB/s)",
-        (length as f64 / elapsed) / 1024.0 / 1024.0 / 1024.0);
-      elapsed
-    */
+        /*
+          let elapsed = (start.elapsed().as_secs() as f64)
+                        + (f64::from(start.elapsed().subsec_nanos()) / 1_000_000_000.0);
+          println!("[+] Read {length} bytes in {elapsed:.2} s ({:.2} GB/s)",
+            (length as f64 / elapsed) / 1024.0 / 1024.0 / 1024.0);
+          elapsed
+        */
 }
 /*}}}*/
 
@@ -249,7 +247,7 @@ struct Stats {
 
 fn setup_workers(hashes: &Hashes) -> Workers {
     // Fire off our worker threads to wait for the data from the wordlist /*{{{*/
-//    let threadnum = num_cpus::get(); // set the number of threads to the number of cores
+    //    let threadnum = num_cpus::get(); // set the number of threads to the number of cores
     let threadnum = 1; // Hardware only allows us to use one thread.
     let mut threadhand: Vec<JoinHandle<_>> = Vec::new();
     // We clone the reciever multiple times which is how the threads pick up new clears
@@ -284,9 +282,11 @@ fn setup_workers(hashes: &Hashes) -> Workers {
             };
             let mut mmap_props: mmapprops_t = mmapprops_t {
                 fd: 0,
-                ptr: std::ptr::null_mut()
+                ptr: std::ptr::null_mut(),
             };
-            unsafe { open_mmap(&mut mmap_props); }
+            unsafe {
+                open_mmap(&mut mmap_props);
+            }
 
             // Fetch clears from the channel
             loop {
@@ -298,7 +298,9 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                         //println!("Break {}",j);
                         stdout().write_all(&out).unwrap();
                         tx2_thread.send(stats).unwrap();
-                        unsafe {close_mmap(&mut mmap_props); }
+                        unsafe {
+                            close_mmap(&mut mmap_props);
+                        }
                         break;
                     }
                     // We got some clears to crack
@@ -323,7 +325,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                             // doing this single Md4 digest is faster than
                             // multiple updates() + finalize()
                             let mut md = md4::MD4::new(&mmap_props);
-                            md.digest(&utf16[..clear.len()*2]);
+                            md.digest(&utf16[..clear.len() * 2]);
                             //md.digest(&utf16);
                             let hash = md.get_hash();
 
@@ -347,7 +349,7 @@ fn setup_workers(hashes: &Hashes) -> Workers {
                                 out.extend_from_slice(&[58]); // colon
                                 out.extend_from_slice(clear); // clear text
                                 out.extend_from_slice(&[10]); // newline
-                                // check if our output buffer should be flushed
+                                                              // check if our output buffer should be flushed
                                 if out.len() >= 8192 {
                                     // make sure this comparison aligns with capacity
                                     stdout().write_all(&out).unwrap();
@@ -391,7 +393,6 @@ fn read_wordlist(
     block_size: usize,
 ) -> Result<Stats, Box<dyn Error>> {
     // Read the wordlist, send chunks to the worker threads & handle cache'ing /*{{{*/
-
     let mut stats = Stats {
         cracked: 0, // how many have we cracked
         hashed: 0,  // how many hashes have we generated
@@ -456,14 +457,14 @@ fn read_wordlist(
                 _ => (wordlist.cache_point + wordlist.cache_size / 2),
             };
             /*
-            // Some debugging stats
-            let mut percent_cached: f64 = 0.0;
-            let mut answer = vec![0u8; wordlist.pages];
-            mincore_check(&wordlist.mmap, wordlist.length, &mut answer);
-            percent_cached = gen_stats(&answer, wordlist.pages);
-            println!("[+] Purging up first {:.2}% bytes from cache
-          Cache point now at {:.2}%, Total in cache now {percent_cached:.2}%",(pos as f64/wordlist.length as f64) * 100_f64,(wordlist.cache_point as f64/wordlist.length as f64) *100_f64);
-            */
+              // Some debugging stats
+              let mut percent_cached: f64 = 0.0;
+              let mut answer = vec![0u8; wordlist.pages];
+              mincore_check(&wordlist.mmap, wordlist.length, &mut answer);
+              percent_cached = gen_stats(&answer, wordlist.pages);
+              println!("[+] Purging up first {:.2}% bytes from cache
+            Cache point now at {:.2}%, Total in cache now {percent_cached:.2}%",(pos as f64/wordlist.length as f64) * 100_f64,(wordlist.cache_point as f64/wordlist.length as f64) *100_f64);
+              */
         }
     }
     Ok(stats)
@@ -472,7 +473,6 @@ fn read_wordlist(
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Put it all together /*{{{*/
-
     // Put the input hashes (to be cracked) into the required forms
     let path = env::args()
         .nth(1)

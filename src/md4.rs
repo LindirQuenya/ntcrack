@@ -1,5 +1,5 @@
-use crate::mmapprops_t;
 use crate::compress_fpga;
+use crate::mmapprops_t;
 
 pub struct MD4 {
     block_len: u64,
@@ -109,7 +109,7 @@ impl MD4 {
 
         //let total = ((self.block_len / 55) + 1) * 64;
         let total = match (self.block_len + 9) % 64 {
-            0 => ((self.block_len + 9) / 64) * 64, 
+            0 => ((self.block_len + 9) / 64) * 64,
             _ => (((self.block_len + 9) / 64) + 1) * 64,
         };
         let padding = match (total - self.block_len) % 64 {
@@ -125,13 +125,13 @@ impl MD4 {
             128 => &mut buffer_128,
             _ => panic!("too big {padding}"),
         };
-        self.pad(&input[pos..],buffer, padding);
+        self.pad(&input[pos..], buffer, padding);
 
         for block in buffer.chunks_exact(64) {
-//            self.compress(block);
-	unsafe {
-            compress_fpga(self.ptr, self.state.as_mut_ptr(), block.as_ptr());
-        }
+            //            self.compress(block);
+            unsafe {
+                compress_fpga(self.ptr, self.state.as_mut_ptr(), block.as_ptr());
+            }
         }
     }
 
@@ -141,5 +141,5 @@ impl MD4 {
         output[..input.len()].copy_from_slice(input);
         output[input.len()] = 0x80;
         output[(size - 8) as usize..].copy_from_slice(&bit_len);
-    } 
+    }
 }
